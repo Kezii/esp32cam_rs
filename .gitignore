@@ -1,0 +1,9 @@
+/.vscode
+/.embuild
+/target
+/Cargo.lock
+
+wifi_pass.txt
+wifi_ssid.txt
+examples/telegram_bot/bot_token.txt
+examples/telegram_bot/owner_id.txt
