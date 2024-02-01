@@ -1,5 +1,5 @@
 [package]
-name = "espcam-test"
+name = "espcam"
 version = "0.1.0"
 authors = ["Kezi <keziolio123@gmail.com>"]
 edition = "2021"
