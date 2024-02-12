@@ -3,7 +3,7 @@ use anyhow::Result;
 use bstr::ByteSlice;
 use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEReturnCode};
 use esp_idf_sys::camera;
-use espcam_test::espcam;
+use espcam::espcam::FrameBuffer;
 use image::{ImageBuffer, ImageOutputFormat, Rgb};
 use log::{error, info};
 
@@ -109,7 +109,7 @@ pub async fn idotmatrix_stream_task(camera: Camera<'_>) -> Result<()> {
     //ble::ble_advertise_task(name, ble_server, ble_advertising).await;
 }
 
-fn framebuffer_to_img(framebuffer: espcam::FrameBuffer<'_>) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+fn framebuffer_to_img(framebuffer: FrameBuffer<'_>) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
     let data = framebuffer.data();
     ImageBuffer::from_fn(
         framebuffer.width() as u32,

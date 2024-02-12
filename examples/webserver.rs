@@ -6,7 +6,7 @@ use esp_idf_svc::{
     hal::peripherals::Peripherals,
     http::{server::EspHttpServer, Method},
 };
-use espcam_test::{espcam::Camera, wifi_handler::my_wifi};
+use espcam::{espcam::Camera, wifi_handler::my_wifi};
 
 fn main() -> Result<()> {
     esp_idf_svc::sys::link_patches();

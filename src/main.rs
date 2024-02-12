@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_svc::{eventloop::EspSystemEventLoop, hal::peripherals::Peripherals};
-use espcam_test::{espcam::Camera, wifi_handler::my_wifi};
+use espcam::{espcam::Camera, wifi_handler::my_wifi};
 
 fn main() -> Result<()> {
     esp_idf_svc::sys::link_patches();

@@ -1,10 +1,9 @@
 use core::panic;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 
-use esp_idf_hal::gpio::PinDriver;
-use esp_idf_svc::{eventloop::EspSystemEventLoop, hal::peripherals::Peripherals};
-use espcam_test::{espcam::Camera, wifi_handler::my_wifi};
+use esp_idf_svc::hal::peripherals::Peripherals;
+use espcam::espcam::Camera;
 use log::error;
 
 use crate::idotmatrixble::idotmatrix_stream_task;
@@ -51,8 +50,6 @@ fn main() -> Result<()> {
                 }
             }
         });
-
-    //_test_camera(camera);
 
     loop {
         std::thread::sleep(std::time::Duration::from_millis(1000));

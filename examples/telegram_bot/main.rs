@@ -3,7 +3,7 @@ use anyhow::{bail, Result};
 use bot_api::{telegram_post_multipart, Esp32Api};
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_svc::{eventloop::EspSystemEventLoop, hal::peripherals::Peripherals};
-use espcam_test::{espcam::Camera, wifi_handler::my_wifi};
+use espcam::{espcam::Camera, wifi_handler::my_wifi};
 use frankenstein::{
     ForwardMessageParams, GetUpdatesParams, SendChatActionParams, SendMessageParams, TelegramApi,
 };
