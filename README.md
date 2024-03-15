@@ -3,7 +3,13 @@ Rust esp32-cam examples
 
 ### Usage
 
-populate the required .txt files, then run the examples
+Download esp32-camera component
+
+```bash
+git submodule update --init
+```
+
+then create the required .txt files
 
 ```
 ./examples/telegram_bot/bot_token.txt
