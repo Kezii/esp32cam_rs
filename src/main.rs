@@ -1,29 +1,13 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 
-use esp_idf_hal::gpio::PinDriver;
-use esp_idf_svc::{eventloop::EspSystemEventLoop, hal::peripherals::Peripherals};
-use espcam::{espcam::Camera, wifi_handler::my_wifi};
+use esp_idf_svc::hal::peripherals::Peripherals;
+use espcam::espcam::Camera;
 
 fn main() -> Result<()> {
     esp_idf_svc::sys::link_patches();
     esp_idf_svc::log::EspLogger::initialize_default();
 
-    let sysloop = EspSystemEventLoop::take()?;
-
     let peripherals = Peripherals::take().unwrap();
-
-    let wifi_ssid = include_str!("../wifi_ssid.txt");
-    let wifi_pass = include_str!("../wifi_pass.txt");
-
-    let mut flash_led = PinDriver::output(peripherals.pins.gpio4).unwrap();
-    flash_led.set_low().unwrap();
-
-    let _wifi = match my_wifi(wifi_ssid, wifi_pass, peripherals.modem, sysloop) {
-        Ok(inner) => inner,
-        Err(err) => {
-            bail!("Could not connect to Wi-Fi network: {:?}", err)
-        }
-    };
 
     let camera = Camera::new(
         peripherals.pins.gpio32,
