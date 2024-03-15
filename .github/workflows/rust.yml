@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
       - name: Install Rust for Xtensa
         uses: esp-rs/xtensa-toolchain@v1.5.2
         with:
           default: true
           ldproxy: true
-      - name: Release build std
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
+      - name: Run cargo check
+        run: cargo check
