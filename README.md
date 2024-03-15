@@ -5,7 +5,7 @@ Rust esp32-cam examples
 
 ### Usage
 
-Download esp32-camera component
+After cloning the repo, download the esp32-camera component
 
 ```bash
 git submodule update --init
