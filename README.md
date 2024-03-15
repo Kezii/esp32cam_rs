@@ -1,4 +1,6 @@
 # esp32cam-rs
+<a href="https://github.com/Kezii/esp32cam_rs/actions"><img alt="actions" src="https://github.com/Kezii/esp32cam_rs/actions/workflows/rust.yml/badge.svg"></a>
+
 Rust esp32-cam examples
 
 ### Usage
