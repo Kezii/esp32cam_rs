@@ -1,6 +1,14 @@
 # esp32cam-rs
 Rust esp32-cam examples
 
+### Setup
+
+You will need to clone the esp32-camera component into the components directory.
+
+```
+git clone https://github.com/espressif/esp32-camera.git components/esp32-camera
+```
+
 ### Usage
 
 populate the required .txt files, then run the examples
