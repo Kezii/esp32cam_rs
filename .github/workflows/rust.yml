@@ -17,5 +17,7 @@ jobs:
         with:
           default: true
           ldproxy: true
+      - name: copy config
+        run: cp cfg.toml.example cfg.toml
       - name: Run cargo check
         run: cargo check --bins --examples
