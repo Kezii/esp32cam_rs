@@ -3,7 +3,7 @@ use anyhow::{bail, Result};
 use bot_api::{telegram_post_multipart, Esp32Api};
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_svc::{eventloop::EspSystemEventLoop, hal::peripherals::Peripherals};
-use espcam::{espcam::Camera, wifi_handler::my_wifi};
+use espcam::{config::get_config, espcam::Camera, wifi_handler::my_wifi};
 use frankenstein::{
     ForwardMessageParams, GetUpdatesParams, SendChatActionParams, SendMessageParams, TelegramApi,
 };
@@ -29,10 +29,14 @@ fn main() -> Result<()> {
     let mut flash_led = PinDriver::output(peripherals.pins.gpio4).unwrap();
     flash_led.set_low().unwrap();
 
-    let wifi_ssid = include_str!("../../wifi_ssid.txt");
-    let wifi_pass = include_str!("../../wifi_pass.txt");
+    let config = get_config();
 
-    let _wifi = match my_wifi(wifi_ssid, wifi_pass, peripherals.modem, sysloop) {
+    let _wifi = match my_wifi(
+        config.wifi_ssid,
+        config.wifi_psk,
+        peripherals.modem,
+        sysloop,
+    ) {
         Ok(inner) => inner,
         Err(err) => {
             bail!("Could not connect to Wi-Fi network: {:?}", err)
@@ -63,8 +67,8 @@ fn main() -> Result<()> {
     let mut bot_state = BotState {
         should_use_flash: false,
         public_use: false,
-        owner_id: include_str!("owner_id.txt").parse().unwrap(),
-        bot_token: include_str!("bot_token.txt"),
+        owner_id: config.bot_owner_id,
+        bot_token: config.bot_token,
     };
 
     let api = Esp32Api::new(bot_state.bot_token);
