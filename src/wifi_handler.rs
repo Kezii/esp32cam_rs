@@ -50,9 +50,14 @@ pub fn my_wifi(
         None
     };
 
+    let mut ssid_heapless = heapless::String::<32>::new();
+    ssid_heapless.push_str(ssid).expect("SSID exceeds heapless String capacity");
+    let mut pass_heapless = heapless::String::<64>::new();
+    pass_heapless.push_str(pass).expect("Password exceeds heapless String capacity");
+
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
-        ssid: ssid.into(),
-        password: pass.into(),
+        ssid: ssid_heapless,
+        password: pass_heapless,
         channel,
         auth_method,
         ..Default::default()

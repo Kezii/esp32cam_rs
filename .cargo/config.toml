@@ -13,6 +13,6 @@ build-std = ["std", "panic_abort"]
 [env]
 MCU="esp32"
 # Note: this variable is not used by the pio builder (`cargo build --features pio`)
-ESP_IDF_VERSION = "v5.1.1"
+ESP_IDF_VERSION = "v5.2.1"
 
 CARGO_WORKSPACE_DIR = { value = "", relative = true }
