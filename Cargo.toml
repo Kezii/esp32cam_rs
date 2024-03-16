@@ -26,12 +26,12 @@ embassy = ["esp-idf-svc/embassy-sync", "esp-idf-svc/critical-section", "esp-idf-
 
 [dependencies]
 log = { version = "0.4", default-features = false }
-esp-idf-svc = { version = "0.47", default-features = false }
+esp-idf-svc = { version = "0.48", default-features = false }
 embedded-svc = "0.26.4"
 anyhow = "1.0.79"
 
 bstr = { version = "1.8.0", default-features = false }
-esp32-nimble = "0.5.0"
+esp32-nimble = "0.6.0"
 tokio = { version = "*", features = ["rt", "time", "sync","macros"] }
 lazy_static = "1.4.0"
 uuid = { version = "1.2.2", default-features = false, features = ["macro-diagnostics"] }
