@@ -51,8 +51,12 @@ pub fn my_wifi(
     };
 
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
-        ssid: ssid.try_into().expect("SSID could not be converted to heapless String"),
-        password: pass.try_into().expect("Password could not be converted to heapless String"),
+        ssid: ssid
+            .try_into()
+            .expect("SSID could not be converted to heapless String"),
+        password: pass
+            .try_into()
+            .expect("Password could not be converted to heapless String"),
         channel,
         auth_method,
         ..Default::default()

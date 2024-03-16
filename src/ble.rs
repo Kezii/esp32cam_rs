@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::bail;
 use esp32_nimble::utilities::BleUuid;
-use esp32_nimble::{BLEAdvertising, BLEAdvertisementData, BLEScan, BLEServer, NimbleProperties};
+use esp32_nimble::{BLEAdvertisementData, BLEAdvertising, BLEScan, BLEServer, NimbleProperties};
 use lazy_static::lazy_static;
 use log::{info, warn};
 use tokio::select;
@@ -53,11 +53,13 @@ pub async fn ble_advertise_task(
     notifying_characteristic.lock().set_value(b"uptime: 0");
 
     // advertising.name(name).add_service_uuid(*UUID_BLE_SERVICE);
-    advertising.set_data(
-        BLEAdvertisementData::new()
-          .name(name)
-          .add_service_uuid(*UUID_BLE_SERVICE),
-      );
+    advertising
+        .set_data(
+            BLEAdvertisementData::new()
+                .name(name)
+                .add_service_uuid(*UUID_BLE_SERVICE),
+        )
+        .unwrap();
 
     advertising.start().expect("ble_advertising.start()");
 

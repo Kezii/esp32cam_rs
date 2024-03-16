@@ -6,7 +6,7 @@ use esp_idf_svc::{
     hal::peripherals::Peripherals,
     http::{server::EspHttpServer, Method},
 };
-use espcam::{espcam::Camera, wifi_handler::my_wifi};
+use espcam::{config::get_config, espcam::Camera, wifi_handler::my_wifi};
 
 fn main() -> Result<()> {
     esp_idf_svc::sys::link_patches();
@@ -16,10 +16,14 @@ fn main() -> Result<()> {
 
     let peripherals = Peripherals::take().unwrap();
 
-    let wifi_ssid = include_str!("../wifi_ssid.txt");
-    let wifi_pass = include_str!("../wifi_pass.txt");
+    let config = get_config();
 
-    let _wifi = match my_wifi(wifi_ssid, wifi_pass, peripherals.modem, sysloop) {
+    let _wifi = match my_wifi(
+        config.wifi_ssid,
+        config.wifi_psk,
+        peripherals.modem,
+        sysloop,
+    ) {
         Ok(inner) => inner,
         Err(err) => {
             bail!("Could not connect to Wi-Fi network: {:?}", err)
@@ -44,7 +48,8 @@ fn main() -> Result<()> {
         peripherals.pins.gpio27,
         esp_idf_sys::camera::pixformat_t_PIXFORMAT_JPEG,
         esp_idf_sys::camera::framesize_t_FRAMESIZE_UXGA,
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut server = EspHttpServer::new(&esp_idf_svc::http::server::Configuration::default())?;
 

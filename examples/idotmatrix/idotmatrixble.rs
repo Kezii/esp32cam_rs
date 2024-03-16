@@ -1,10 +1,10 @@
 use crate::Camera;
 use anyhow::Result;
 use bstr::ByteSlice;
-use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEReturnCode};
+use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEError};
 use esp_idf_sys::camera;
 use espcam::espcam::FrameBuffer;
-use image::{ImageBuffer, ImageOutputFormat, Rgb};
+use image::{ImageBuffer, ImageFormat, Rgb};
 use log::{error, info};
 
 pub struct IDMBle<'a> {
@@ -15,7 +15,7 @@ impl<'a> IDMBle<'a> {
     pub async fn new(
         ble_device: &'a BLEDevice,
         client: &'a mut BLEClient,
-    ) -> Result<Self, BLEReturnCode> {
+    ) -> Result<Self, BLEError> {
         let ble_scan = ble_device.get_scan();
 
         info!("Scanning for BLE devices...");
@@ -44,11 +44,11 @@ impl<'a> IDMBle<'a> {
             Ok(Self { characteristic })
         } else {
             error!("No device found");
-            Err(BLEReturnCode::fail().unwrap_err())
+            Err(BLEError::fail().unwrap_err())
         }
     }
 
-    pub async fn send_data(&mut self, bytes: &[u8]) -> Result<(), BLEReturnCode> {
+    pub async fn send_data(&mut self, bytes: &[u8]) -> Result<(), BLEError> {
         for (counter, chunk) in bytes.chunks(512).enumerate() {
             let succ = self.characteristic.write_value(chunk, true).await;
             info!("progress: {}%", (counter * chunk.len()) * 100 / bytes.len());
@@ -90,7 +90,7 @@ pub async fn idotmatrix_stream_task(camera: Camera<'_>) -> Result<()> {
             let mut c = std::io::Cursor::new(Vec::new());
 
             info!("Writing png");
-            scaled.write_to(&mut c, ImageOutputFormat::Png).unwrap();
+            scaled.write_to(&mut c, ImageFormat::Png).unwrap();
 
             info!("Creating command");
             let command = idotmatrix::IDMCommand::UploadPng(c.into_inner());
