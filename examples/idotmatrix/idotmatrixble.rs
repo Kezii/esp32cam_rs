@@ -1,7 +1,7 @@
 use crate::Camera;
 use anyhow::Result;
 use bstr::ByteSlice;
-use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEError};
+use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEReturnCode};
 use esp_idf_sys::camera;
 use espcam::espcam::FrameBuffer;
 use image::{ImageBuffer, ImageFormat, Rgb};
@@ -15,7 +15,7 @@ impl<'a> IDMBle<'a> {
     pub async fn new(
         ble_device: &'a BLEDevice,
         client: &'a mut BLEClient,
-    ) -> Result<Self, BLEError> {
+    ) -> Result<Self, BLEReturnCode> {
         let ble_scan = ble_device.get_scan();
 
         info!("Scanning for BLE devices...");
@@ -44,11 +44,11 @@ impl<'a> IDMBle<'a> {
             Ok(Self { characteristic })
         } else {
             error!("No device found");
-            Err(BLEError::fail().unwrap_err())
+            Err(BLEReturnCode::fail().unwrap_err())
         }
     }
 
-    pub async fn send_data(&mut self, bytes: &[u8]) -> Result<(), BLEError> {
+    pub async fn send_data(&mut self, bytes: &[u8]) -> Result<(), BLEReturnCode> {
         for (counter, chunk) in bytes.chunks(512).enumerate() {
             let succ = self.characteristic.write_value(chunk, true).await;
             info!("progress: {}%", (counter * chunk.len()) * 100 / bytes.len());

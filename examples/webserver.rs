@@ -70,13 +70,13 @@ fn main() -> Result<()> {
             response.write_all("no framebuffer".as_bytes())?;
         }
 
-        Ok::<(), anyhow::Error>(())
+        Ok(())
     })?;
 
     server.fn_handler("/", Method::Get, |request| {
         let mut response = request.into_ok_response()?;
         response.write_all("ok".as_bytes())?;
-        Ok::<(), anyhow::Error>(())
+        Ok(())
     })?;
 
     loop {
