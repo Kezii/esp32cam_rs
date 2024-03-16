@@ -55,8 +55,8 @@ pub async fn ble_advertise_task(
     // advertising.name(name).add_service_uuid(*UUID_BLE_SERVICE);
     advertising.set_data(
         BLEAdvertisementData::new()
-          .name("ESP32-GATT-Server")
-          .add_service_uuid(BleUuid::Uuid16(0xABCD)),
+          .name(name)
+          .add_service_uuid(*UUID_BLE_SERVICE),
       );
 
     advertising.start().expect("ble_advertising.start()");
