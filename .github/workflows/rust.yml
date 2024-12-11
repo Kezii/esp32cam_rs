@@ -18,6 +18,6 @@ jobs:
           default: true
           ldproxy: true
       - name: copy config
-        run: cp cfg.toml.example cfg.toml
+        run: cp src/wifi_config.rs.example src/wifi_config.rs
       - name: Run cargo check
         run: cargo check --bins --examples
