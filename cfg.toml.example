@@ -1,5 +1,0 @@
-[espcam]
-wifi_ssid = "FBI Surveillance Van"
-wifi_psk = "hunter2"
-bot_token = "change_me"
-bot_owner_id = 12345678

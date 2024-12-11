@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 
-use esp_idf_hal::io::Write;
+use esp_idf_hal::io::{EspIOError, Write};
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
     hal::peripherals::Peripherals,
@@ -53,7 +53,9 @@ fn main() -> Result<()> {
 
     let mut server = EspHttpServer::new(&esp_idf_svc::http::server::Configuration::default())?;
 
-    server.fn_handler("/camera.jpg", Method::Get, |request| {
+    server.fn_handler("/camera.jpg", Method::Get, move |request| {
+        camera.get_framebuffer();
+        // take two frames to get a fresh one
         let framebuffer = camera.get_framebuffer();
 
         if let Some(framebuffer) = framebuffer {
@@ -70,13 +72,13 @@ fn main() -> Result<()> {
             response.write_all("no framebuffer".as_bytes())?;
         }
 
-        Ok(())
+        Ok::<(), EspIOError>(())
     })?;
 
     server.fn_handler("/", Method::Get, |request| {
         let mut response = request.into_ok_response()?;
         response.write_all("ok".as_bytes())?;
-        Ok(())
+        Ok::<(), EspIOError>(())
     })?;
 
     loop {

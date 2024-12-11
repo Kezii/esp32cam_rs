@@ -1,8 +1,9 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 
 use bot_api::{telegram_post_multipart, Esp32Api};
 use esp_idf_hal::gpio::PinDriver;
 use esp_idf_svc::{eventloop::EspSystemEventLoop, hal::peripherals::Peripherals};
+use esp_idf_sys::esp_restart;
 use espcam::{config::get_config, espcam::Camera, wifi_handler::my_wifi};
 use frankenstein::{
     ForwardMessageParams, GetUpdatesParams, SendChatActionParams, SendMessageParams, TelegramApi,
@@ -11,9 +12,18 @@ use log::{error, info};
 
 mod bot_api;
 
-struct BotState {
+struct BotConfiguration {
     should_use_flash: bool,
     public_use: bool,
+}
+
+const DEFAULT_CONFIG: BotConfiguration = BotConfiguration {
+    should_use_flash: false,
+    public_use: false,
+};
+
+struct BotState {
+    config: BotConfiguration,
     owner_id: i64,
     bot_token: &'static str,
 }
@@ -39,7 +49,10 @@ fn main() -> Result<()> {
     ) {
         Ok(inner) => inner,
         Err(err) => {
-            bail!("Could not connect to Wi-Fi network: {:?}", err)
+            flash_led.set_high().unwrap();
+
+            error!("Could not connect to Wi-Fi network: {:?}", err);
+            unsafe { esp_restart() };
         }
     };
 
@@ -65,8 +78,7 @@ fn main() -> Result<()> {
     .unwrap();
 
     let mut bot_state = BotState {
-        should_use_flash: false,
-        public_use: false,
+        config: DEFAULT_CONFIG,
         owner_id: config.bot_owner_id,
         bot_token: config.bot_token,
     };
@@ -113,7 +125,7 @@ fn main() -> Result<()> {
 
                 match message.text.unwrap_or_default().as_str() {
                     "/photo" => {
-                        if message.chat.id != bot_state.owner_id && !bot_state.public_use {
+                        if message.chat.id != bot_state.owner_id && !bot_state.config.public_use {
                             continue;
                         }
 
@@ -125,7 +137,7 @@ fn main() -> Result<()> {
                         )
                         .ok();
 
-                        if bot_state.should_use_flash {
+                        if bot_state.config.should_use_flash {
                             flash_led.set_high().unwrap();
                         }
 
@@ -156,11 +168,11 @@ fn main() -> Result<()> {
                     }
 
                     "/flash" => {
-                        if message.chat.id != bot_state.owner_id && !bot_state.public_use {
+                        if message.chat.id != bot_state.owner_id && !bot_state.config.public_use {
                             continue;
                         }
-                        if bot_state.should_use_flash {
-                            bot_state.should_use_flash = false;
+                        if bot_state.config.should_use_flash {
+                            bot_state.config.should_use_flash = false;
 
                             api.send_message(
                                 &SendMessageParams::builder()
@@ -170,7 +182,7 @@ fn main() -> Result<()> {
                             )
                             .unwrap();
                         } else {
-                            bot_state.should_use_flash = true;
+                            bot_state.config.should_use_flash = true;
 
                             api.send_message(
                                 &SendMessageParams::builder()
@@ -186,8 +198,8 @@ fn main() -> Result<()> {
                         if message.chat.id != bot_state.owner_id {
                             continue;
                         }
-                        if bot_state.public_use {
-                            bot_state.public_use = false;
+                        if bot_state.config.public_use {
+                            bot_state.config.public_use = false;
 
                             api.send_message(
                                 &SendMessageParams::builder()
@@ -197,7 +209,7 @@ fn main() -> Result<()> {
                             )
                             .unwrap();
                         } else {
-                            bot_state.public_use = true;
+                            bot_state.config.public_use = true;
 
                             api.send_message(
                                 &SendMessageParams::builder()

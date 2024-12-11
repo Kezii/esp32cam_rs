@@ -43,11 +43,10 @@ pub fn my_wifi(
         );
         Some(ours.channel)
     } else {
-        info!(
-            "Configured access point {} not found during scanning, will go with unknown channel",
+        return Err(anyhow::anyhow!(
+            "Configured access point {} not found during scanning",
             ssid
-        );
-        None
+        ));
     };
 
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {

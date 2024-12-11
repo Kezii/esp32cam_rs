@@ -11,7 +11,7 @@ After cloning the repo, download the esp32-camera component
 git submodule update --init
 ```
 
-then copy `cfg.toml.example` into `cfg.toml` and fill in the correct values
+then copy `src/wifi_config.rs.example` into `src/wifi_config.rs` and fill in the correct values
 
 ## Telegram bot
 

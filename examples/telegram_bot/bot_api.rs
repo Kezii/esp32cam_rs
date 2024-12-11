@@ -48,8 +48,8 @@ pub fn http_post(url: impl AsRef<str>, data: &[u8]) -> Result<Vec<u8>, EspBotErr
             log::error!("{}\n", resp_string);
 
             Err(EspBotError::Http(HttpError {
-                code: status,
-                message: format!("response code: {}", status),
+                _code: status,
+                _message: format!("response code: {}", status),
             }))
         }
     }
@@ -127,8 +127,8 @@ pub fn telegram_post_multipart(
             log::error!("{}\n", resp_string);
 
             Err(EspBotError::Http(HttpError {
-                code: status,
-                message: format!("response code: {}", status),
+                _code: status,
+                _message: format!("response code: {}", status),
             }))
         }
     }
@@ -161,8 +161,8 @@ pub enum EspBotError {
 
 #[derive(Debug)]
 pub struct HttpError {
-    pub code: u16,
-    pub message: String,
+    pub _code: u16,
+    pub _message: String,
 }
 
 static BASE_API_URL: &str = "https://api.telegram.org/bot";
@@ -178,7 +178,10 @@ impl Esp32Api {
 impl From<std::io::Error> for EspBotError {
     fn from(error: std::io::Error) -> Self {
         let message = format!("{error:?}");
-        let error = HttpError { code: 500, message };
+        let error = HttpError {
+            _code: 500,
+            _message: message,
+        };
         Self::Http(error)
     }
 }
@@ -212,7 +215,10 @@ impl TelegramApi for Esp32Api {
                 Ok(result) => EspBotError::Api(result),
                 Err(error) => {
                     let message = format!("{error:?}");
-                    let error = HttpError { code: 500, message };
+                    let error = HttpError {
+                        _code: 500,
+                        _message: message,
+                    };
                     EspBotError::Http(error)
                 }
             }
@@ -228,8 +234,8 @@ impl TelegramApi for Esp32Api {
         _files: Vec<(&str, PathBuf)>,
     ) -> Result<T2, EspBotError> {
         let error = HttpError {
-            code: 500,
-            message: "isahc doesn't support form data requests".to_string(),
+            _code: 500,
+            _message: "isahc doesn't support form data requests".to_string(),
         };
 
         Err(EspBotError::Http(error))

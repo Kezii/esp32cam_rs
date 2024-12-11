@@ -1,14 +1,7 @@
-use std::time::Duration;
-
-use anyhow::bail;
 use esp32_nimble::utilities::BleUuid;
-use esp32_nimble::{BLEAdvertising, BLEScan, BLEServer, NimbleProperties};
+use esp32_nimble::{BLEAdvertising, BLEServer, NimbleProperties};
 use lazy_static::lazy_static;
-use log::{info, warn};
-use tokio::select;
-use tokio::time::sleep;
-
-use anyhow::anyhow;
+use log::warn;
 
 pub static UUID_BLE_SERVICE_STR: &str = "io.test.ble"; // up-to 16 bytes
 pub static UUID_BLE_UPTIME_CHARA_STR: &str = "uptime"; // up-to 16 bytes
@@ -52,7 +45,14 @@ pub async fn ble_advertise_task(
     );
     notifying_characteristic.lock().set_value(b"uptime: 0");
 
-    advertising.name(name).add_service_uuid(*UUID_BLE_SERVICE);
+    advertising
+        .set_data(
+            esp32_nimble::BLEAdvertisementData::new()
+                .name(name)
+                .add_service_uuid(*UUID_BLE_SERVICE),
+        )
+        .unwrap();
+
     // advertising
     //     .set_data(
     //         BLEAdvertisementData::new()
@@ -78,38 +78,38 @@ pub async fn ble_advertise_task(
     }
 }
 
-pub async fn do_ble_scan(
-    ble_scan: &mut BLEScan,
-) -> Result<Vec<esp32_nimble::BLEAdvertisedDevice>, anyhow::Error> {
-    let (tx, rx) = tokio::sync::oneshot::channel::<()>();
-    let mut tx = Some(tx);
+// pub async fn do_ble_scan(
+//     ble_scan: &mut BLEScan,
+// ) -> Result<Vec<esp32_nimble::BLEAdvertisedDevice>, anyhow::Error> {
+//     let (tx, rx) = tokio::sync::oneshot::channel::<()>();
+//     let mut tx = Some(tx);
 
-    ble_scan
-        .active_scan(true)
-        .filter_duplicates(true)
-        .limited(false)
-        .interval(100)
-        .window(99)
-        .on_completed(move || {
-            let tx = tx.take();
-            if let Some(tx) = tx {
-                let _ = tx.send(());
-            }
-        });
-    ble_scan
-        .start(10000)
-        .await
-        .map_err(|e| anyhow!("ble_scan.start: {:?}", e))?;
+//     ble_scan
+//         .active_scan(true)
+//         .filter_duplicates(true)
+//         .limited(false)
+//         .interval(100)
+//         .window(99)
+//         .on_completed(move || {
+//             let tx = tx.take();
+//             if let Some(tx) = tx {
+//                 let _ = tx.send(());
+//             }
+//         });
+//     ble_scan
+//         .start(10000)
+//         .await
+//         .map_err(|e| anyhow!("ble_scan.start: {:?}", e))?;
 
-    select! {
-        _ = sleep(Duration::from_secs(15)) => {
-            bail!("ble scan timed out!");
-        }
-        _ = rx => {
-            info!("Scan finished");
-        }
-    };
-    let result = ble_scan.get_results().cloned().collect::<Vec<_>>();
+//     select! {
+//         _ = sleep(Duration::from_secs(15)) => {
+//             bail!("ble scan timed out!");
+//         }
+//         _ = rx => {
+//             info!("Scan finished");
+//         }
+//     };
+//     let result = ble_scan.get_results().cloned().collect::<Vec<_>>();
 
-    Ok(result)
-}
+//     Ok(result)
+// }

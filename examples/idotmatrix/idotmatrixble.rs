@@ -1,7 +1,7 @@
 use crate::Camera;
 use anyhow::Result;
 use bstr::ByteSlice;
-use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEReturnCode};
+use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEError, BLEScan};
 use esp_idf_sys::camera;
 use espcam::espcam::FrameBuffer;
 use image::{ImageBuffer, ImageFormat, Rgb};
@@ -15,8 +15,8 @@ impl<'a> IDMBle<'a> {
     pub async fn new(
         ble_device: &'a BLEDevice,
         client: &'a mut BLEClient,
-    ) -> Result<Self, BLEReturnCode> {
-        let ble_scan = ble_device.get_scan();
+    ) -> Result<Self, BLEError> {
+        let mut ble_scan = BLEScan::new();
 
         info!("Scanning for BLE devices...");
 
@@ -24,7 +24,14 @@ impl<'a> IDMBle<'a> {
             .active_scan(true)
             .interval(100)
             .window(99)
-            .find_device(1000, |device| device.name().contains_str("IDM"))
+            .start(ble_device, 1000, |device, data| {
+                if let Some(name) = data.name() {
+                    if name.contains_str("IDM") {
+                        return Some(*device);
+                    }
+                }
+                None
+            })
             .await?;
 
         if let Some(device) = device {
@@ -32,7 +39,7 @@ impl<'a> IDMBle<'a> {
                 client.update_conn_params(120, 120, 0, 60).unwrap();
             });
 
-            client.connect(device.addr()).await?;
+            client.connect(&device.addr()).await?;
 
             let service = client
                 .get_service(uuid128!("000000fa-0000-1000-8000-00805f9b34fb"))
@@ -44,11 +51,11 @@ impl<'a> IDMBle<'a> {
             Ok(Self { characteristic })
         } else {
             error!("No device found");
-            Err(BLEReturnCode::fail().unwrap_err())
+            Err(BLEError::fail().unwrap_err())
         }
     }
 
-    pub async fn send_data(&mut self, bytes: &[u8]) -> Result<(), BLEReturnCode> {
+    pub async fn send_data(&mut self, bytes: &[u8]) -> Result<(), BLEError> {
         for (counter, chunk) in bytes.chunks(512).enumerate() {
             let succ = self.characteristic.write_value(chunk, true).await;
             info!("progress: {}%", (counter * chunk.len()) * 100 / bytes.len());
