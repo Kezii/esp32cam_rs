@@ -98,7 +98,7 @@ fn main() -> Result<()> {
         .unwrap();
 
     let mut offset = if let Some(update) = updates.result.first() {
-        update.update_id + 1
+        update.update_id as i64 + 1
     } else {
         0
     };
@@ -115,7 +115,7 @@ fn main() -> Result<()> {
             .unwrap();
 
         for update in updates.result {
-            offset = update.update_id + 1;
+            offset = update.update_id as i64 + 1;
 
             if let frankenstein::UpdateContent::Message(message) = update.content {
                 info!(
