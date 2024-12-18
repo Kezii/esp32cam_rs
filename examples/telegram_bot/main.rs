@@ -1,8 +1,12 @@
 use anyhow::Result;
 
 use bot_api::{telegram_post_multipart, Esp32Api};
-use esp_idf_hal::gpio::PinDriver;
-use esp_idf_svc::{eventloop::EspSystemEventLoop, hal::peripherals::Peripherals};
+use esp_idf_hal::{gpio::PinDriver, io::Write};
+use esp_idf_svc::{
+    eventloop::EspSystemEventLoop,
+    hal::peripherals::Peripherals,
+    http::{server::EspHttpServer, Method},
+};
 use esp_idf_sys::esp_restart;
 use espcam::{config::get_config, espcam::Camera, wifi_handler::my_wifi};
 use frankenstein::{
@@ -18,8 +22,8 @@ struct BotConfiguration {
 }
 
 const DEFAULT_CONFIG: BotConfiguration = BotConfiguration {
-    should_use_flash: false,
-    public_use: false,
+    should_use_flash: true,
+    public_use: true,
 };
 
 struct BotState {
@@ -41,7 +45,7 @@ fn main() -> Result<()> {
 
     let config = get_config();
 
-    let _wifi = match my_wifi(
+    let wifi = match my_wifi(
         config.wifi_ssid,
         config.wifi_psk,
         peripherals.modem,
@@ -49,12 +53,22 @@ fn main() -> Result<()> {
     ) {
         Ok(inner) => inner,
         Err(err) => {
-            flash_led.set_high().unwrap();
-
             error!("Could not connect to Wi-Fi network: {:?}", err);
+
+            for _ in 0..5 {
+                flash_led.set_high().unwrap();
+                std::thread::sleep(std::time::Duration::from_millis(1));
+                flash_led.set_low().unwrap();
+                std::thread::sleep(std::time::Duration::from_millis(80));
+            }
+
             unsafe { esp_restart() };
         }
     };
+
+    flash_led.set_high().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(1));
+    flash_led.set_low().unwrap();
 
     let camera = Camera::new(
         peripherals.pins.gpio32,
@@ -77,6 +91,34 @@ fn main() -> Result<()> {
     )
     .unwrap();
 
+    let camera = std::sync::Arc::new(camera);
+
+    let mut server = EspHttpServer::new(&esp_idf_svc::http::server::Configuration::default())?;
+
+    let camera2 = camera.clone();
+
+    server.fn_handler("/camera.jpg", Method::Get, move |request| {
+        camera2.get_framebuffer();
+        // take two frames to get a fresh one
+        let framebuffer = camera2.get_framebuffer();
+
+        if let Some(framebuffer) = framebuffer {
+            let data = framebuffer.data();
+
+            let headers = [
+                ("Content-Type", "image/jpeg"),
+                ("Content-Length", &data.len().to_string()),
+            ];
+            let mut response = request.into_response(200, Some("OK"), &headers).unwrap();
+            response.write_all(data)?;
+        } else {
+            let mut response = request.into_ok_response()?;
+            response.write_all("no framebuffer".as_bytes())?;
+        }
+
+        Ok::<(), esp_idf_hal::io::EspIOError>(())
+    })?;
+
     let mut bot_state = BotState {
         config: DEFAULT_CONFIG,
         owner_id: config.bot_owner_id,
@@ -85,13 +127,27 @@ fn main() -> Result<()> {
 
     let api = Esp32Api::new(bot_state.bot_token);
 
-    api.send_message(
-        &SendMessageParams::builder()
-            .chat_id(bot_state.owner_id)
-            .text("Starting!")
-            .build(),
-    )
-    .ok();
+    let send_owner_info = |bot_state: &BotState| {
+        let mut rssi = 0;
+        unsafe {
+            esp_idf_sys::esp_wifi_sta_get_rssi(&mut rssi);
+        }
+        api.send_message(
+            &SendMessageParams::builder()
+                .chat_id(bot_state.owner_id)
+                .text(format!(
+                    "Camera OK!\nUse /publish to toggle public use!\nIP: {}\nRSSI: {}\nflash: {}\npublic use: {}",
+                    wifi.sta_netif().get_ip_info().unwrap().ip,
+                    rssi,
+                    bot_state.config.should_use_flash,
+                    bot_state.config.public_use
+                ))
+                .build(),
+        )
+        .ok();
+    };
+
+    send_owner_info(&bot_state);
 
     let updates = api
         .get_updates(&GetUpdatesParams::builder().limit(1u32).offset(-1).build())
@@ -220,14 +276,18 @@ fn main() -> Result<()> {
                             .unwrap();
                         }
                     }
-                    "/start" => {
+                    "/start" | "/help" => {
                         api.send_message(
                             &SendMessageParams::builder()
                                 .chat_id(message.chat.id)
-                                .text("Hello!")
+                                .text("Hello!\nUse /photo to take a photo!\nUse /flash to toggle flash!")
                                 .build(),
                         )
                         .ok();
+
+                        if message.chat.id == bot_state.owner_id {
+                            send_owner_info(&bot_state);
+                        }
                     }
                     _ => {}
                 }
