@@ -219,6 +219,7 @@ fn main() -> Result<()> {
                                 framebuffer.data(),
                                 message.chat.id,
                                 Some(caption),
+                                Some(message.message_id),
                             );
 
                             match res {

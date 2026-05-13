@@ -60,6 +60,7 @@ pub fn telegram_post_multipart(
     data: &[u8],
     chat_id: i64,
     caption: Option<String>,
+    reply_to_message_id: Option<i32>,
 ) -> Result<Vec<u8>, EspBotError> {
     // 1. Create a new EspHttpConnection with default Configuration. (Check documentation)
     let config = Configuration::default();
@@ -74,6 +75,15 @@ pub fn telegram_post_multipart(
 
     let mut head = String::new();
     push_multipart_text_field(&mut head, boundary, "chat_id", &chat_id);
+
+    if let Some(reply_id) = reply_to_message_id {
+        push_multipart_text_field(
+            &mut head,
+            boundary,
+            "reply_parameters",
+            &format!(r#"{{"message_id":{}}}"#, reply_id),
+        );
+    }
 
     if let Some(caption) = caption.as_deref() {
         push_multipart_text_field(&mut head, boundary, "caption", caption);
